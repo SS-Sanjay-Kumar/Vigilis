@@ -1,17 +1,21 @@
 package main
 
 import (
-	"github.com/SS-Sanjay-Kumar/Vigilis/internal/http"
+	"net/http"
 
+	"github.com/SS-Sanjay-Kumar/Vigilis/internal/handler"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	router := gin.Default()
+	router.GET("/albums", handler.GetAlbums)
 
-	// Health check route
-	router.GET("/health", http.HealthCheck)
+	router.GET("/health", func (c *gin.Context){
+		c.JSON(http.StatusOK, gin.H{
+			"status": "UP",
+		})
+	})
 
-	// Run server on port 8000
-	router.Run(":8000")
+	router.Run("localhost:8080")
 }
