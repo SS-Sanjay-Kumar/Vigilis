@@ -1,21 +1,19 @@
 package main
 
 import (
-	"net/http"
-
 	"github.com/SS-Sanjay-Kumar/Vigilis/internal/handler"
+	"github.com/SS-Sanjay-Kumar/Vigilis/internal/logger"
+
 	"github.com/gin-gonic/gin"
 )
 
-func main() {
-	router := gin.Default()
-	router.GET("/albums", handler.GetAlbums)
+func main(){
+	customLogger:= logger.GetLogger() //custom config logger 
+	defer customLogger.Sync()
 
-	router.GET("/health", func (c *gin.Context){
-		c.JSON(http.StatusOK, gin.H{
-			"status": "UP",
-		})
-	})
+	healthHandler := handler.NewHealthHandler(customLogger) //dependency injection here
 
+	router:= gin.Default() 
+	router.GET("/health", healthHandler.CheckHealth)
 	router.Run("localhost:8080")
 }
