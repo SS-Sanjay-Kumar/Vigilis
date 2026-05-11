@@ -12,8 +12,10 @@ func main(){
 	defer customLogger.Sync()
 
 	healthHandler := handler.NewHealthHandler(customLogger) //dependency injection here
+	logHandler := handler.NewLogHandler(customLogger) //dependency injection here
 
 	router:= gin.Default() 
 	router.GET("/health", healthHandler.CheckHealth)
+	router.POST("/logs", logHandler.IngestLogs)
 	router.Run("localhost:8080")
 }
