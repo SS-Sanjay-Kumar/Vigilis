@@ -12,7 +12,7 @@ import (
 
 type LogHandler struct{
 	logger *zap.Logger
-	logChannel chan models.LogEntry
+	logChan chan models.LogEntry
 }
 // ! Why are we using a struct for a handler?
 //* Answer: In Go, we want to avoid Global State at all costs because 
@@ -22,7 +22,7 @@ type LogHandler struct{
 func NewLogHandler(l *zap.Logger,ch chan models.LogEntry) *LogHandler {
 	return &LogHandler{
 		logger: l,
-		logChannel: ch,
+		logChan: ch,
 	}
 }
 
@@ -38,14 +38,14 @@ func (lh *LogHandler) IngestLogs( c *gin.Context) {
 		return
 	}
 	// todo: Instead of printing the log entry, we should send the logs to the channel
-	
+	lh.logChan <- newLogEntry
 
-	
+	//* keeping the print statement for testing
 	fmt.Printf("%+v\n",newLogEntry) // this prints prints the values along with its fields
 	// Using just Println => {info 2026-05-11T15:09:02.618+0530 handler/health_handler.go:26 Test akjdbfhkadgf}
 	// Using Printf and =V verb => {Level:info Timestamp:2026-05-11T15:09:02.618+0530 Caller:handler/health_handler.go:26 Message:Test akjdbfhkadgf}
 
-	c.JSON(http.StatusOK, gin.H{
+	c.JSON(http.StatusAccepted, gin.H{
 		"success": true,
 		"error": nil,
 	})

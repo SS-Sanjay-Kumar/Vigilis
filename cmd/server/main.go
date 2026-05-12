@@ -4,6 +4,7 @@ import (
 	"github.com/SS-Sanjay-Kumar/Vigilis/internal/handler"
 	"github.com/SS-Sanjay-Kumar/Vigilis/internal/logger"
 	"github.com/SS-Sanjay-Kumar/Vigilis/internal/models"
+	"github.com/SS-Sanjay-Kumar/Vigilis/internal/worker"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,6 +17,10 @@ func main(){
 	healthHandler := handler.NewHealthHandler(customLogger) //dependency injection here
 	logHandler := handler.NewLogHandler(customLogger, logChan)
 	
+	logWorker := worker.NewLogWorker(customLogger, logChan)
+
+	go logWorker.LogWorker()
+
 	router:= gin.Default() 
 	v1:= router.Group("/v1")
 	{
