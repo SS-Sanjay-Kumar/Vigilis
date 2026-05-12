@@ -15,7 +15,10 @@ func main(){
 	logHandler := handler.NewLogHandler(customLogger) //dependency injection here
 
 	router:= gin.Default() 
-	router.GET("/health", healthHandler.CheckHealth)
-	router.POST("/logs", logHandler.IngestLogs)
+	v1:= router.Group("/v1")
+	{
+		v1.GET("/health", healthHandler.CheckHealth)
+		v1.POST("/logs", logHandler.IngestLogs)
+	}
 	router.Run("localhost:8080")
 }
