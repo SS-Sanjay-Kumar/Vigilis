@@ -24,7 +24,7 @@ func NewHealthHandler(l *zap.Logger) *HealthHandler {
 }
 
 func (h *HealthHandler) CheckHealth(c *gin.Context) {
-	h.logger.Info("Health Checkpoint Hit!(temp)") // we have to push this into the channel
+	h.logger.Info("‼️ Health Checkpoint Hit ‼️") // we have to push this into the channel
 	// eg: {
 	// "level":"info",
 	// "ts":"2026-05-11T15:09:02.618+0530",
