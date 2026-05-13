@@ -11,15 +11,15 @@ import (
 )
 
 // todo: Write a function that returns a *pgxpool.Pool
-type PostgresTools struct {
+type PostgresSetup struct {
 	logger *zap.Logger
 }
 
-func LoadPostgresTools(l *zap.Logger) *PostgresTools {
-	return &PostgresTools{logger: l}
+func NewPostgresSetup(l *zap.Logger) *PostgresSetup {
+	return &PostgresSetup{logger: l}
 }
 
-func (pt *PostgresTools) ConnectDB() (*pgxpool.Pool, error) {
+func (pt *PostgresSetup) ConnectDB() (*pgxpool.Pool, error) {
 	db, nonEmpty := os.LookupEnv("DB_URL")
 	if !nonEmpty {
 		pt.logger.Error("Missing ENV VARS")

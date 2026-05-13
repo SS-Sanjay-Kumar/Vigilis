@@ -21,7 +21,7 @@ func main() {
 	logHandler := handler.NewLogHandler(customLogger, logChan)
 
 	// postgres
-	dbConnHandler:= database.LoadPostgresTools(customLogger)
+	dbConnHandler:= database.NewPostgresSetup(customLogger)
 	dbConn, err := dbConnHandler.ConnectDB()
 	if err!=nil{
 		panic("🛑 Error in Connecting to Database!!!")
