@@ -42,10 +42,8 @@ func (lw *LogWorkerTools) LogWorker() {
 			if len(batch) >= batchSize {
 				lw.logger.Info("🟢 Batch Threshold met; Bulk Insertion...") //again emoji for easy identification
 
-				for i, entry := range batch {
-					msg := fmt.Sprintf("Log no: %o; Entry: %+v\n", i, entry)
-					lw.logger.Info(msg)
-				}
+				lw.flush(batch)
+
 				batch = nil
 				ticker.Reset(tickerTimeInterval) //resetting to 5 seconds
 				lw.logger.Info("LogWorker: Bulk Insertion Completed!")
@@ -54,15 +52,19 @@ func (lw *LogWorkerTools) LogWorker() {
 		case <-ticker.C:
 			if len(batch) > 0 { //only consume when the channel is non-empty
 				lw.logger.Info("🟢 Batch Ticker Rang; Bulk Insertion...") //again emoji for easy identification
-
-				for i, entry := range batch {
-					msg := fmt.Sprintf("Log no: %o; Entry: %+v\n", i, entry)
-					lw.logger.Info(msg)
-				}
+				
+				lw.flush(batch)
+				
 				batch = nil
 				lw.logger.Info("LogWorker: Bulk Insertion Completed!")
 			}
 			//case ends here
 		}
+	}
+}
+func (lw *LogWorkerTools)flush(batch []models.LogEntry) {
+	for i, entry := range batch {
+		msg := fmt.Sprintf("Log no: %o; Entry: %+v\n", i, entry)
+		lw.logger.Info(msg)
 	}
 }
