@@ -35,6 +35,3 @@ func (h *HealthHandler) CheckHealth(c *gin.Context) {
 		"status": "ok",
 	})
 }
-
-// !todo: Implement concurrent buffer(Producer Consumer Pattern)
-// Instead of logging a string(refer l.no 28, we should log a structured type)
