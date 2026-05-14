@@ -32,9 +32,9 @@ func (lr *LogRepository) InsertLogBatch(ctx context.Context, logs []models.LogEn
 	//* Return an error when the function(even void func like this) can realistically fail in a way the caller should handle.
 
 	// step 1: Specify the columns needed
-	columns := []string{"level", "timestamp", "caller", "message"}
+	columns := []string{"level", "ts", "caller", "message"}
 
-	// step 2:
+	// step 2: Use copyfrom to stream data into the database in very high speed through a special pipeline
 
 	_, err := lr.dbPool.CopyFrom(
 		ctx,                    // context
