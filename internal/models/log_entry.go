@@ -1,8 +1,10 @@
 package models
 
+import "time"
+
 type LogEntry struct {
 	Level string `json:"level" binding:"required"`
-	Timestamp string `json:"ts" binding:"required"`
+	Timestamp time.Time `json:"ts" binding:"required"`
 	Caller string `json:"caller" binding:"required"`
 	Message string `json:"msg" binding:"required"`
 }

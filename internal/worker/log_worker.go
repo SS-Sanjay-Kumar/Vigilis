@@ -1,22 +1,25 @@
 package worker
 
 import (
-	"fmt"
+	"context"
 	"time"
 
 	"github.com/SS-Sanjay-Kumar/Vigilis/internal/models"
+	"github.com/SS-Sanjay-Kumar/Vigilis/internal/repository"
 	"go.uber.org/zap"
 )
 
 type LogWorkerTools struct {
 	logger  *zap.Logger
 	logChan chan models.LogEntry
+	repo    *repository.LogRepository
 }
 
-func NewLogWorker(l *zap.Logger, logChan chan models.LogEntry) *LogWorkerTools {
+func NewLogWorker(l *zap.Logger, logChan chan models.LogEntry, r *repository.LogRepository) *LogWorkerTools {
 	return &LogWorkerTools{
 		logger:  l,
 		logChan: logChan,
+		repo:    r,
 	}
 }
 
@@ -40,31 +43,34 @@ func (lw *LogWorkerTools) LogWorker() {
 			batch = append(batch, log)
 
 			if len(batch) >= batchSize {
-				lw.logger.Info("🟢 Batch Threshold met; Bulk Insertion...") //again emoji for easy identification
-
-				lw.flush(batch)
-
-				batch = nil
+				lw.flush(&batch, true)
 				ticker.Reset(tickerTimeInterval) //resetting to 5 seconds
-				lw.logger.Info("LogWorker: Bulk Insertion Completed!")
 			}
 		//case ends here
 		case <-ticker.C:
 			if len(batch) > 0 { //only consume when the channel is non-empty
-				lw.logger.Info("🟢 Batch Ticker Rang; Bulk Insertion...") //again emoji for easy identification
-				
-				lw.flush(batch)
-				
-				batch = nil
-				lw.logger.Info("LogWorker: Bulk Insertion Completed!")
+				lw.flush(&batch, false)
 			}
-			//case ends here
+		//case ends here
 		}
 	}
 }
-func (lw *LogWorkerTools)flush(batch []models.LogEntry) {
-	for i, entry := range batch {
-		msg := fmt.Sprintf("Log no: %o; Entry: %+v\n", i, entry)
-		lw.logger.Info(msg)
+func (lw *LogWorkerTools) flush(batch *[]models.LogEntry, channelCase bool) { //we dont need this
+
+	if channelCase {
+		lw.logger.Info("🟢 Batch Threshold met; Bulk Insertion...") //again emoji for easy identification
+	} else {
+		lw.logger.Info("🟢 Batch Ticker Rang; Bulk Insertion...") //again emoji for easy identification
 	}
+
+	err := lw.repo.InsertLogBatch(context.Background(), *batch)
+	//! set to context.background for now,
+	//! need to change this for graceful shutdowns
+	if err != nil {
+		lw.logger.Warn("Error in Inserting Log Batch", zap.Error(err))
+		return
+	}
+
+	*batch = nil
+	lw.logger.Info("LogWorker: Bulk Insertion Completed!")
 }
