@@ -23,7 +23,7 @@ func main() {
 	customLogger := logger.GetLogger() //custom config logger
 	defer customLogger.Sync()
 
-	logChan := make(chan models.LogEntry, 50) //! channel capacity is set to 50 for dev purposes
+	logChan := make(chan models.LogEntry, 10000) //! channel capacity is set to 10000 for testing purposes
 
 	healthHandler := handler.NewHealthHandler(customLogger) //dependency injection here
 	logHandler := handler.NewLogHandler(customLogger, logChan)

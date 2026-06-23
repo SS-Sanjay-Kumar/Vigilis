@@ -1,0 +1,3 @@
+POST http://localhost:8080/v1/logs
+Content-Type: application/json
+@log_payload.json
