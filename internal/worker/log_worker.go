@@ -27,7 +27,7 @@ func (lw *LogWorkerTools) LogWorker() {
 	lw.logger.Info("🛑 Log Worker is starting...") //using emoji to easily identify it in the console
 
 	// Creating slices to store batches of logs
-	batchSize := 1000 //! batchsize is set to 1000, for testing purposes
+	batchSize := 1000
 	var batch []models.LogEntry
 
 	tickerTimeInterval := 5 * time.Second

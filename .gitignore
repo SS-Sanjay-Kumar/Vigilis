@@ -30,3 +30,12 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# python
+anomaly_detection/.venv/
+.venv/
+env/
+venv/
+
+# mac specific
+.DS_Store
