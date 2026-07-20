@@ -74,3 +74,5 @@ func (lw *LogWorkerTools) flush(batch *[]models.LogEntry, channelCase bool) { //
 	*batch = nil
 	lw.logger.Info("LogWorker: Bulk Insertion Completed!")
 }
+
+//todo: function to drop these logfs into redis message queue
