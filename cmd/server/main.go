@@ -42,8 +42,8 @@ func main() {
 
 	// redis mq
 	//-----------------------------------------------------------------
-	redisUrl, error := os.LookupEnv("REDIS_URL")
-	if error{
+	redisUrl, exists := os.LookupEnv("REDIS_URL")
+	if !exists{
 		fmt.Println("🛑🛑🛑🛑🛑 Missing ENV Vars 🛑🛑🛑🛑🛑")
 		panic("🛑 Error in Connecting to Redis!!!")
 

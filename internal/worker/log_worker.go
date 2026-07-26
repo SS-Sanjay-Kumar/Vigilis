@@ -13,17 +13,17 @@ import (
 )
 
 type LogWorkerTools struct {
-	logger  *zap.Logger
-	logChan chan models.LogEntry
-	repo    *repository.LogRepository
+	logger            *zap.Logger
+	logChan           chan models.LogEntry
+	repo              *repository.LogRepository
 	redisMessageQueue *redis.Client
 }
 
 func NewLogWorker(l *zap.Logger, logChan chan models.LogEntry, r *repository.LogRepository, rmq *redis.Client) *LogWorkerTools {
 	return &LogWorkerTools{
-		logger:  l,
-		logChan: logChan,
-		repo:    r,
+		logger:            l,
+		logChan:           logChan,
+		repo:              r,
 		redisMessageQueue: rmq,
 	}
 }
@@ -48,23 +48,25 @@ func (lw *LogWorkerTools) LogWorker() {
 			batch = append(batch, log)
 
 			if len(batch) >= batchSize {
-				lw.flushToDB(&batch, true)
-				// todo call flushToMQ
+				lw.flushToDB(batch, true)
+				lw.PushToRedisMQ(batch, true)
+				batch = nil
 				ticker.Reset(tickerTimeInterval) //resetting to 5 seconds
 			}
 		//case ends here
+
 		case <-ticker.C:
 			if len(batch) > 0 { //only consume when the channel is non-empty
-				lw.flushToDB(&batch, false)
-				// todo call flushToMQ
+				lw.flushToDB(batch, false)
+				lw.PushToRedisMQ(batch, false)
+				batch = nil
 			}
-		//case ends here
+			//case ends here
 		}
 	}
-	// *batch = nil
 }
 
-func (lw *LogWorkerTools) flushToDB(batch *[]models.LogEntry, channelCase bool) { //we dont need this
+func (lw *LogWorkerTools) flushToDB(batch []models.LogEntry, channelCase bool) { //we dont need this
 
 	if channelCase {
 		lw.logger.Info("🟢 Batch Threshold met; Bulk Insertion...") //again emoji for easy identification
@@ -73,7 +75,7 @@ func (lw *LogWorkerTools) flushToDB(batch *[]models.LogEntry, channelCase bool) 
 	}
 
 	// stream data to postgres
-	err := lw.repo.InsertLogBatch(context.Background(), *batch)
+	err := lw.repo.InsertLogBatch(context.Background(), batch)
 	//! set to context.background for now,
 	//! need to change this for graceful shutdowns
 	if err != nil {
@@ -81,7 +83,6 @@ func (lw *LogWorkerTools) flushToDB(batch *[]models.LogEntry, channelCase bool) 
 		return
 	}
 
-	*batch = nil//! move to line 63
 	lw.logger.Info("LogWorker: Bulk Insertion Completed!")
 }
 
@@ -91,7 +92,7 @@ func (lw *LogWorkerTools) flushToDB(batch *[]models.LogEntry, channelCase bool) 
 
 // todo for now: create a function to LPUSH the batches of logs into REDIS MQ
 
-func (lw *LogWorkerTools) PushToRedisMQ(batch [] models.LogEntry, channelCase bool){
+func (lw *LogWorkerTools) PushToRedisMQ(batch []models.LogEntry, channelCase bool) {
 	if channelCase {
 		lw.logger.Info("🟢 Batch Threshold met; Bulk Push to RedisMQ...") //again emoji for easy identification
 	} else {
@@ -99,13 +100,13 @@ func (lw *LogWorkerTools) PushToRedisMQ(batch [] models.LogEntry, channelCase bo
 	}
 
 	//! batch size is now set to 100
-	payload, err:= json.Marshal(batch)
-	if err!=nil{
+	payload, err := json.Marshal(batch)
+	if err != nil {
 		lw.logger.Error("Error Parsing JSON while pushing log batches to Redis Message Queue!", zap.Error(err))
 		return
 	}
-	
-	err = lw.redisMessageQueue.LPush(context.Background(),"vigilis_log_message_queue", payload).Err()
+
+	err = lw.redisMessageQueue.LPush(context.Background(), "vigilis_log_message_queue", payload).Err()
 	if err != nil {
 		lw.logger.Error("Failed to push batch to Redis MQ", zap.Error(err))
 		return
