@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/SS-Sanjay-Kumar/Vigilis/internal/database"
 	"github.com/SS-Sanjay-Kumar/Vigilis/internal/handler"
@@ -10,6 +11,7 @@ import (
 	"github.com/SS-Sanjay-Kumar/Vigilis/internal/repository"
 	"github.com/SS-Sanjay-Kumar/Vigilis/internal/worker"
 	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,7 +25,7 @@ func main() {
 	customLogger := logger.GetLogger() //custom config logger
 	defer customLogger.Sync()
 
-	logChan := make(chan models.LogEntry, 5000)
+	logChan := make(chan models.LogEntry, 5000) //! LOOK HERE: channel size 
 
 	healthHandler := handler.NewHealthHandler(customLogger) //dependency injection here
 	logHandler := handler.NewLogHandler(customLogger, logChan)
@@ -37,8 +39,22 @@ func main() {
 	}
 	//* defer closing the db connection pool(pgxpool)
 	defer dbPoolConn.Close()
+
+	// redis mq
+	//-----------------------------------------------------------------
+	redisUrl, error := os.LookupEnv("REDIS_URL")
+	if error{
+		fmt.Println("🛑🛑🛑🛑🛑 Missing ENV Vars 🛑🛑🛑🛑🛑")
+		panic("🛑 Error in Connecting to Redis!!!")
+
+	}
+	redisMQClient := redis.NewClient(&redis.Options{Addr: redisUrl})
+	fmt.Println(redisMQClient)
+
+	//-----------------------------------------------------------------
+
 	logRepo := repository.NewLogRepository(dbPoolConn)
-	logWorker := worker.NewLogWorker(customLogger, logChan, logRepo)
+	logWorker := worker.NewLogWorker(customLogger, logChan, logRepo, redisMQClient)
 
 	go logWorker.LogWorker()
 
