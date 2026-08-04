@@ -2,9 +2,7 @@ import re
 import os
 import psycopg2
 from psycopg2.extras import DictCursor
-from dotenv import load_dotenv
-
-load_dotenv()
+from config import config
 
 def clean_log_message(message):
 
@@ -16,13 +14,7 @@ def clean_log_message(message):
 
 def stream_logs_from_db(batch_size=50000):
 
-    conn = psycopg2.connect(
-        dbname=os.getenv("DB_NAME"), 
-        user=os.getenv("DB_USER"), 
-        password=os.getenv("DB_PASSWORD"), 
-        host=os.getenv("DB_HOST"), 
-        port=os.getenv("DB_PORT")
-    )
+    conn = psycopg2.connect(config.DATABASE_URL)
     
     cursor = conn.cursor('sentinel_log_stream_cursor', cursor_factory=DictCursor)
     

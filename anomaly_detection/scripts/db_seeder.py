@@ -3,20 +3,12 @@ from datetime import datetime, timezone
 from datasets import load_dataset
 import psycopg2
 from psycopg2.extras import execute_values
-from dotenv import load_dotenv
-
-load_dotenv()
+from config import config
 
 def seed_database_from_hugging_face():
-    conn = psycopg2.connect(
-        dbname=os.getenv("DB_NAME"), 
-        user=os.getenv("DB_USER"), 
-        password=os.getenv("DB_PASSWORD"), 
-        host=os.getenv("DB_HOST"), 
-        port=os.getenv("DB_PORT")
-    )
+    conn = psycopg2.connect(config.DATABASE_URL)
 
-    print("test dotenv ->",os.getenv("DB_NAME")) #! test print
+    print("test dotenv ->",config.DATABASE_URL) #! test print
     cursor = conn.cursor()
     
     print("info: connecting to hugging face dataset stream")

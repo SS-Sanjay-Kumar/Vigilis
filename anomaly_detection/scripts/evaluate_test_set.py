@@ -6,10 +6,9 @@ import psycopg2
 from psycopg2.extras import DictCursor
 from sklearn.feature_extraction.text import HashingVectorizer
 import tensorflow as tf
-from dotenv import load_dotenv
 from src.matrix_builder import get_one_hot_mapping
+from config import config
 
-load_dotenv()
 
 def clean_log_message(message):
     message = re.sub(r'blk_-?\d+', 'BLOCK_ID', message)
@@ -51,13 +50,7 @@ def evaluate_engine():
         report.write("| --- | --- | --- | --- | --- | --- |\n")
     
     print("Connecting to database and initializing streaming pipeline...")
-    conn = psycopg2.connect(
-        dbname=os.getenv("DB_NAME"), 
-        user=os.getenv("DB_USER"), 
-        password=os.getenv("DB_PASSWORD"), 
-        host=os.getenv("DB_HOST"), 
-        port=os.getenv("DB_PORT")
-    )
+    conn = psycopg2.connect(config.DATABASE_URL)
     
     cursor = conn.cursor(name="anomaly_stream_cursor", cursor_factory=DictCursor)
     query = "SELECT ts, caller, level, message FROM logs WHERE level != 'info'"
