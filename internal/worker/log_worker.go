@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/SS-Sanjay-Kumar/Vigilis/internal/models"
@@ -101,6 +102,13 @@ func (lw *LogWorkerTools) PushToRedisMQ(batch []models.LogEntry, channelCase boo
 
 	//! batch size is now set to 100
 	payload, err := json.Marshal(batch)
+	fmt.Println("🟢🟢🟢🟢🟢🟢🟢🟢🟢PAYLOAD", string(payload))
+
+	// 🟢🟢🟢🟢🟢🟢🟢🟢🟢PAYLOAD [
+	// 	{"level":"info","ts":"2025-05-14T15:04:05Z","caller":"test","msg":"Testing log worker Aug 4"},
+	// {"level":"info","ts":"2025-05-14T15:04:05Z","caller":"test","msg":"Testing log worker Aug 4"}
+	// ]
+
 	if err != nil {
 		lw.logger.Error("Error Parsing JSON while pushing log batches to Redis Message Queue!", zap.Error(err))
 		return
