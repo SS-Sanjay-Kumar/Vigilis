@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.feature_extraction.text import HashingVectorizer
-from extractor import stream_logs_from_db
+from src.extractor import stream_logs_from_db
 
 def get_one_hot_mapping():
     """
