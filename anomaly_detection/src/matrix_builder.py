@@ -1,4 +1,3 @@
-# matrix_builder.py
 import numpy as np
 from sklearn.feature_extraction.text import HashingVectorizer
 from extractor import stream_logs_from_db

@@ -3,7 +3,7 @@ import numpy as np
 import os
 import tensorflow as tf
 from tensorflow.keras import layers, models
-from matrix_builder import build_feature_matrix
+from src.matrix_builder import build_feature_matrix
 
 def train_anomaly_detector():
     # Stream structural matrix arrays from memory builder logic
