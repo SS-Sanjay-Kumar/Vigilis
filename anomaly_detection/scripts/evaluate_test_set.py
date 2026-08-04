@@ -7,7 +7,7 @@ from psycopg2.extras import DictCursor
 from sklearn.feature_extraction.text import HashingVectorizer
 import tensorflow as tf
 from dotenv import load_dotenv
-from matrix_builder import get_one_hot_mapping
+from src.matrix_builder import get_one_hot_mapping
 
 load_dotenv()
 
