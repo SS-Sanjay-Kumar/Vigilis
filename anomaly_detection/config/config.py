@@ -8,3 +8,4 @@ DATABASE_URL = os.getenv(
 )
 
 REDIS_URL = os.getenv("REDIS_URL")
+REDIS_MQ_KEY_NAME = os.getenv("REDIS_MQ_KEY_NAME")
