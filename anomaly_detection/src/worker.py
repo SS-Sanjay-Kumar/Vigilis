@@ -44,9 +44,10 @@ def initialize_ai_engine():
     redis_host = config.REDIS_HOST
     redis_port = config.REDIS_PORT
     queue_name = config.REDIS_MQ_KEY_NAME
-    
+
+    #! redis init here
     r = redis.Redis(host=redis_host, port=redis_port, db=0, decode_responses=True)
-    
+    r.xadd
     try:
         r.ping()
         print(f"Connected to Redis at {redis_host}:{redis_port}. Listening on key: '{queue_name}'")
@@ -113,7 +114,7 @@ def build_live_batch_matrix(
 
     return batch_matrix, current_prev_ts
 
-def process_predictions(X_batch, batch, engine):
+def process_predictions(X_batch, batch, engine, r):
     model = engine["model"]
     threshold = engine["threshold"]
 
@@ -133,6 +134,18 @@ def process_predictions(X_batch, batch, engine):
             print(f"   ├─ Message:   {log.get('msg')}")
             print(
                 f"   └─ MSE Loss:  {loss:.6f} (Threshold: {threshold:.6f})\n"
+            )
+            payload = {
+                "level": log.get('level'),
+                "timestamp": log.get('ts'),
+                "caller": log.get('caller'),
+                "message":log.get('msg'),
+                "mse": f"{loss:.6f}",
+                "threshold": f"{threshold:.6f}"
+            }
+            r.xadd(
+                "log:anomaly",
+                payload,
             )
 
     if anomalies_found == 0:
@@ -162,7 +175,7 @@ def start_worker_loop():
                 prev_timestamp,
             )
 
-            process_predictions(X_batch, batch, engine)
+            process_predictions(X_batch, batch, engine, r)
 
         except json.JSONDecodeError as e:
             print(f"Error: Failed to parse JSON payload from Redis: {e}")
