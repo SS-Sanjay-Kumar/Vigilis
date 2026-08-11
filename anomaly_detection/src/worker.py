@@ -47,7 +47,7 @@ def initialize_ai_engine():
 
     #! redis init here
     r = redis.Redis(host=redis_host, port=redis_port, db=0, decode_responses=True)
-    r.xadd
+
     try:
         r.ping()
         print(f"Connected to Redis at {redis_host}:{redis_port}. Listening on key: '{queue_name}'")
@@ -114,7 +114,8 @@ def build_live_batch_matrix(
 
     return batch_matrix, current_prev_ts
 
-def process_predictions(X_batch, batch, engine, r):
+def process_predictions(X_batch, batch, engine):
+    r = engine["redis"]
     model = engine["model"]
     threshold = engine["threshold"]
 
@@ -175,7 +176,7 @@ def start_worker_loop():
                 prev_timestamp,
             )
 
-            process_predictions(X_batch, batch, engine, r)
+            process_predictions(X_batch, batch, engine)
 
         except json.JSONDecodeError as e:
             print(f"Error: Failed to parse JSON payload from Redis: {e}")
