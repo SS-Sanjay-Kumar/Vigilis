@@ -55,8 +55,10 @@ func main() {
 
 	logRepo := repository.NewLogRepository(dbPoolConn)
 	logWorker := worker.NewLogWorker(customLogger, logChan, logRepo, redisMQClient)
+	anomalyLogsWorker := worker.NewAnomalyLogsWorker(customLogger, redisMQClient)
 
 	go logWorker.LogWorker()
+	go anomalyLogsWorker.StartAnomalyLogsWorker()
 
 	router := gin.Default()
 	v1 := router.Group("/v1")
