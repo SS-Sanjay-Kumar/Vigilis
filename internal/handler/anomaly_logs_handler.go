@@ -46,9 +46,7 @@ func (alh *AnomalyLogsHandler) SendAnomalyLogs(c *gin.Context) {
 			}
 			c.SSEvent("anomaly", msg)
 			return true
-
 		}
-
 	})
 
 }
