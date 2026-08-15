@@ -3,7 +3,6 @@ package worker
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
@@ -21,7 +20,7 @@ func NewAnomalyLogsWorker(logger *zap.Logger, redisClient *redis.Client) *Anomal
 	}
 }
 
-func (aw *AnomalyLogsWorker) StartAnomalyLogsWorker() {
+func (aw *AnomalyLogsWorker) StartAnomalyLogsWorker() (logsBatch *[]string) {
 	aw.logger.Info("Anomaly Log Worker is starting...")
 
 	for {
@@ -56,6 +55,7 @@ func (aw *AnomalyLogsWorker) StartAnomalyLogsWorker() {
 		//			]
 		// 		}
 		// ]
+		logsBatch := []string{}
 
 		for _, stream := range anomaly_logs_streams {
 			// fmt.Println("‼️‼️‼️stream ", stream)
@@ -71,7 +71,14 @@ func (aw *AnomalyLogsWorker) StartAnomalyLogsWorker() {
 				}
 
 				jsonString := string(jsonBytes)
-				fmt.Println("Extracted JSON:", jsonString)
+				logsBatch = append(logsBatch, jsonString)
+				//* checking:
+				// fmt.Println("Extracted JSON:", jsonString)
+				// fmt.Println("logsBatch", logsBatch)
+				// output:
+				// Extracted JSON: {"caller":"dfs.DataNode$DataXceiver","level":"info","message":"sample checks logsBatch","mse":"0.022590","threshold":"0.001085","timestamp":"2026-11-11T10:26:43+05:30"}
+				// logsBatch [{"caller":"dfs.DataNode$DataXceiver","level":"info","message":"sample checks logsBatch","mse":"0.022590","threshold":"0.001085","timestamp":"2026-11-11T10:26:43+05:30"}]
+
 			}
 		}
 
@@ -82,6 +89,8 @@ func (aw *AnomalyLogsWorker) StartAnomalyLogsWorker() {
 		// Extracted JSON: {"caller":"dfs.DataNode$DataXceiver","level":"info","message":"sample maja bek veedu","mse":"0.021571","threshold":"0.001085","timesta
 
 		// sse: send anomaly logs to the frontend
+		return &logsBatch
+
 	}
 
 }
