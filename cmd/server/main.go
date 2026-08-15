@@ -7,10 +7,13 @@ import (
 	"github.com/SS-Sanjay-Kumar/Vigilis/internal/handler"
 	"github.com/SS-Sanjay-Kumar/Vigilis/internal/hub"
 	"github.com/SS-Sanjay-Kumar/Vigilis/internal/logger"
+	"github.com/SS-Sanjay-Kumar/Vigilis/internal/middleware"
 	"github.com/SS-Sanjay-Kumar/Vigilis/internal/models"
 	"github.com/SS-Sanjay-Kumar/Vigilis/internal/repository"
 	"github.com/SS-Sanjay-Kumar/Vigilis/internal/worker"
+	
 	"github.com/joho/godotenv"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
@@ -65,11 +68,13 @@ func main() {
 	go anomalyLogsWorker.StartAnomalyLogsWorker()
 
 	router := gin.Default()
+	router.Use(middleware.PrometheusMiddleware())
 	v1 := router.Group("/v1")
 	{
 		v1.GET("/health", healthHandler.CheckHealth)
 		v1.POST("/logs", logHandler.IngestLogs)
 		v1.GET("/events", anomalyLogsHandler.SendAnomalyLogs)
+		v1.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	}
 	router.Run("localhost:8080")
 }

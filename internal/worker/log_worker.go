@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/SS-Sanjay-Kumar/Vigilis/internal/metrics"
 	"github.com/SS-Sanjay-Kumar/Vigilis/internal/models"
 	"github.com/SS-Sanjay-Kumar/Vigilis/internal/repository"
 	"go.uber.org/zap"
@@ -50,6 +51,7 @@ func (lw *LogWorkerTools) LogWorker() {
 			if len(batch) >= batchSize {
 				lw.flushToDB(batch, true)
 				lw.PushToRedisMQ(batch, true)
+				metrics.LogsIngestedTotal.Add(float64(len(batch)))
 				batch = nil
 				ticker.Reset(tickerTimeInterval) //resetting to 5 seconds
 			}
@@ -59,6 +61,7 @@ func (lw *LogWorkerTools) LogWorker() {
 			if len(batch) > 0 { //only consume when the channel is non-empty
 				lw.flushToDB(batch, false)
 				lw.PushToRedisMQ(batch, false)
+				metrics.LogsIngestedTotal.Add(float64(len(batch)))
 				batch = nil
 			}
 			//case ends here
