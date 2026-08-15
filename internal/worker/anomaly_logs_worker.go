@@ -20,7 +20,7 @@ func NewAnomalyLogsWorker(logger *zap.Logger, redisClient *redis.Client) *Anomal
 	}
 }
 
-func (aw *AnomalyLogsWorker) StartAnomalyLogsWorker() (logsBatch *[]string) {
+func (aw *AnomalyLogsWorker) StartAnomalyLogsWorker() {
 	aw.logger.Info("Anomaly Log Worker is starting...")
 
 	for {
@@ -55,7 +55,6 @@ func (aw *AnomalyLogsWorker) StartAnomalyLogsWorker() (logsBatch *[]string) {
 		//			]
 		// 		}
 		// ]
-		logsBatch := []string{}
 
 		for _, stream := range anomaly_logs_streams {
 			// fmt.Println("‼️‼️‼️stream ", stream)
@@ -71,7 +70,7 @@ func (aw *AnomalyLogsWorker) StartAnomalyLogsWorker() (logsBatch *[]string) {
 				}
 
 				jsonString := string(jsonBytes)
-				logsBatch = append(logsBatch, jsonString)
+				aw.logger.Info("JSON -> " + jsonString)
 				//* checking:
 				// fmt.Println("Extracted JSON:", jsonString)
 				// fmt.Println("logsBatch", logsBatch)
@@ -89,8 +88,6 @@ func (aw *AnomalyLogsWorker) StartAnomalyLogsWorker() (logsBatch *[]string) {
 		// Extracted JSON: {"caller":"dfs.DataNode$DataXceiver","level":"info","message":"sample maja bek veedu","mse":"0.021571","threshold":"0.001085","timesta
 
 		// sse: send anomaly logs to the frontend
-		return &logsBatch
-
 	}
 
 }
