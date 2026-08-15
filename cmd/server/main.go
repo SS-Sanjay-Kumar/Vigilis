@@ -5,6 +5,7 @@ import (
 
 	"github.com/SS-Sanjay-Kumar/Vigilis/internal/database"
 	"github.com/SS-Sanjay-Kumar/Vigilis/internal/handler"
+	"github.com/SS-Sanjay-Kumar/Vigilis/internal/hub"
 	"github.com/SS-Sanjay-Kumar/Vigilis/internal/logger"
 	"github.com/SS-Sanjay-Kumar/Vigilis/internal/models"
 	"github.com/SS-Sanjay-Kumar/Vigilis/internal/repository"
@@ -27,9 +28,11 @@ func main() {
 
 	logChan := make(chan models.LogEntry, 5000) //! LOOK HERE: channel size
 
+	anomalyLogsHub := hub.NewAnomalyDetectionHub()
+
 	healthHandler := handler.NewHealthHandler(customLogger) //dependency injection here
 	logHandler := handler.NewLogHandler(customLogger, logChan)
-	anomalyLogsHandler := handler.NewAnomalyLogsHandler(customLogger)
+	anomalyLogsHandler := handler.NewAnomalyLogsHandler(customLogger, anomalyLogsHub)
 
 	// postgres
 	dbConnHandler := database.NewPostgresSetup(customLogger)
@@ -56,7 +59,7 @@ func main() {
 
 	logRepo := repository.NewLogRepository(dbPoolConn)
 	logWorker := worker.NewLogWorker(customLogger, logChan, logRepo, redisClient)
-	anomalyLogsWorker := worker.NewAnomalyLogsWorker(customLogger, redisClient)
+	anomalyLogsWorker := worker.NewAnomalyLogsWorker(customLogger, redisClient, anomalyLogsHub)
 
 	go logWorker.LogWorker()
 	go anomalyLogsWorker.StartAnomalyLogsWorker()
