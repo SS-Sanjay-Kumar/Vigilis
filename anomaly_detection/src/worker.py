@@ -53,8 +53,8 @@ def initialize_ai_engine():
     except redis.ConnectionError:
         raise RuntimeError("Failed to connect to Redis. Ensure Redis server is running!")
 
-    vigilis_ai_total_logs_evaluated = Counter("vigilis_ai_total_logs_evaluated", "Total number of logs evaluated by the python autoencoder")
-    vigilis_ai_total_anomalies_detected= Counter("vigilis_ai_total_anomalies_detected", "Number of anomaly logs found")
+    vigilis_ai_logs_evaluated_total = Counter("vigilis_ai_logs_evaluated_total", "Total number of logs evaluated by the python autoencoder")
+    vigilis_ai_anomalies_detected_total= Counter("vigilis_ai_anomalies_detected_total", "Number of anomaly logs found")
     vigilis_ai_inference_latency_seconds = Histogram("vigilis_ai_inference_latency_seconds", "Time it took (in seconds) for logs ingestion")
 
     return {
@@ -66,8 +66,8 @@ def initialize_ai_engine():
         "redis": r,
         "queue_name": queue_name,
 
-        "vigilis_ai_total_logs_evaluated" : vigilis_ai_total_logs_evaluated,
-        "vigilis_ai_total_anomalies_detected" : vigilis_ai_total_anomalies_detected,
+        "vigilis_ai_logs_evaluated_total" : vigilis_ai_logs_evaluated_total,
+        "vigilis_ai_anomalies_detected_total" : vigilis_ai_anomalies_detected_total,
         "vigilis_ai_inference_latency_seconds" : vigilis_ai_inference_latency_seconds,
     } #return the engine of objects
 
@@ -127,11 +127,11 @@ def process_predictions(X_batch, batch, engine):
     model = engine["model"]
     threshold = engine["threshold"]
 
-    vigilis_ai_total_logs_evaluated = engine["vigilis_ai_total_logs_evaluated"]
-    vigilis_ai_total_anomalies_detected = engine["vigilis_ai_total_anomalies_detected"]
+    vigilis_ai_logs_evaluated_total = engine["vigilis_ai_logs_evaluated_total"]
+    vigilis_ai_anomalies_detected_total = engine["vigilis_ai_anomalies_detected_total"]
     vigilis_ai_inference_latency_seconds = engine["vigilis_ai_inference_latency_seconds"]
 
-    vigilis_ai_total_logs_evaluated.inc(len(batch))
+    vigilis_ai_logs_evaluated_total.inc(len(batch))
 
     if X_batch.shape[0] == 0:
         return
@@ -165,7 +165,7 @@ def process_predictions(X_batch, batch, engine):
                 payload,
             )
 
-    vigilis_ai_total_anomalies_detected.inc(anomalies_found)
+    vigilis_ai_anomalies_detected_total.inc(anomalies_found)
 
     if anomalies_found == 0:
         print(
