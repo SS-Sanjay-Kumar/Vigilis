@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/SS-Sanjay-Kumar/Vigilis/internal/hub"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
@@ -11,22 +12,25 @@ import (
 type AnomalyLogsWorker struct {
 	logger      *zap.Logger
 	redisClient *redis.Client
+	hub         *hub.AnomalyDetectionHub
 }
 
-func NewAnomalyLogsWorker(logger *zap.Logger, redisClient *redis.Client) *AnomalyLogsWorker {
+func NewAnomalyLogsWorker(logger *zap.Logger, redisClient *redis.Client, hub *hub.AnomalyDetectionHub) *AnomalyLogsWorker {
 	return &AnomalyLogsWorker{
 		logger:      logger,
 		redisClient: redisClient,
+		hub:         hub,
 	}
 }
 
 func (aw *AnomalyLogsWorker) StartAnomalyLogsWorker() {
 	aw.logger.Info("Anomaly Log Worker is starting...")
+	lastID := "$"
 
 	for {
 
 		anomaly_logs_streams, err := aw.redisClient.XRead(context.Background(), &redis.XReadArgs{
-			Streams: []string{"log:anomaly", "$"}, // here "$" means, read new entries after the func call
+			Streams: []string{"log:anomaly", lastID}, // here lastID ="$" and it means, read new entries after the func call
 			Block:   0,
 			Count:   10, //! temp
 		}).Result()
@@ -59,6 +63,7 @@ func (aw *AnomalyLogsWorker) StartAnomalyLogsWorker() {
 		for _, stream := range anomaly_logs_streams {
 			// fmt.Println("‼️‼️‼️stream ", stream)
 			for _, message := range stream.Messages {
+				lastID = message.ID
 				// fmt.Println("‼️‼️‼️message ", message)
 				// fmt.Println("‼️‼️‼️message.Values ", message.Values)
 
@@ -70,7 +75,8 @@ func (aw *AnomalyLogsWorker) StartAnomalyLogsWorker() {
 				}
 
 				jsonString := string(jsonBytes)
-				aw.logger.Info("JSON -> " + jsonString)
+				aw.hub.Broadcast(jsonString)
+
 				//* checking:
 				// fmt.Println("Extracted JSON:", jsonString)
 				// fmt.Println("logsBatch", logsBatch)

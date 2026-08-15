@@ -22,7 +22,7 @@ func (h *AnomalyDetectionHub) Subscribe() chan string {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	ch := make(chan string, 100)
+	ch := make(chan string, 100) //! temp: buffer capacity is set to 100
 	h.subscribers[ch] = true
 
 	return ch

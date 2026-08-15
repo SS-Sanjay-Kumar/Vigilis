@@ -2,19 +2,21 @@ package handler
 
 import (
 	"io"
-	"time"
 
+	"github.com/SS-Sanjay-Kumar/Vigilis/internal/hub"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
 type AnomalyLogsHandler struct {
 	logger *zap.Logger
+	hub    *hub.AnomalyDetectionHub
 }
 
-func NewAnomalyLogsHandler(l *zap.Logger) *AnomalyLogsHandler {
+func NewAnomalyLogsHandler(l *zap.Logger, hub *hub.AnomalyDetectionHub) *AnomalyLogsHandler {
 	return &AnomalyLogsHandler{
 		logger: l,
+		hub:    hub,
 	}
 }
 
@@ -26,22 +28,24 @@ func (alh *AnomalyLogsHandler) SendAnomalyLogs(c *gin.Context) {
 	c.Writer.Header().Set("Connection", "keep-alive")
 	c.Writer.Header().Set("Transfer-Encoding", "chunked")
 
+	// subscribe client to the central hub
+	clientChan := alh.hub.Subscribe()
+	defer alh.hub.Unsubscribe(clientChan)
+
 	c.Stream(func(w io.Writer) bool {
 
-		ticker := time.NewTicker(2 * time.Second) //! temp: 2 seconds
-		defer ticker.Stop()
-
 		select {
-		// Listen to client disconnection
-		case <-c.Writer.CloseNotify():
-			return false 
+		// case: Client disconnected
+		case <-c.Request.Context().Done():
+			return false
 
-		case t := <-ticker.C:
-			c.SSEvent("message", map[string]interface{}{
-				"status":    "active",
-				"timestamp": t.Format(time.RFC3339),
-			})
-			return true 
+		// case: receive new payload(anomaly logs) from the worker
+		case msg, ok := <-clientChan:
+			if !ok {
+				return false
+			}
+			c.SSEvent("anomaly", msg)
+			return true
 		}
 	})
 
