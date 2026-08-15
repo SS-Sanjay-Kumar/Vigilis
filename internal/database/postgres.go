@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -30,7 +29,7 @@ func (pt *PostgresSetup) ConnectDB() (*pgxpool.Pool, error) {
 
 	dbPool, err := pgxpool.New(context.Background(), db)
 	if err != nil {
-		pt.logger.Error(fmt.Sprintf("Unable to create connection pool: %v\n", err))
+		pt.logger.Error("Postgre Error:Unable to create connection pool", zap.Error(err))
 		return nil, err
 	}
 	checkDB := dbPool.Ping(context.Background())
