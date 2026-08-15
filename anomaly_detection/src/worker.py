@@ -9,11 +9,10 @@ import numpy as np
 import tensorflow as tf
 from sklearn.feature_extraction.text import HashingVectorizer
 
+from prometheus_client import start_http_server,Counter, Histogram
+
 from src.matrix_builder import get_one_hot_mapping
 from config import config
-
-# r = redis.Redis(host=config.REDIS_HOST, port=config.REDIS_PORT, decode_responses=True)
-# print(r.get(config.REDIS_MQ_KEY_NAME))
 
 def clean_log_message(message):
 
@@ -54,13 +53,22 @@ def initialize_ai_engine():
     except redis.ConnectionError:
         raise RuntimeError("Failed to connect to Redis. Ensure Redis server is running!")
 
+    vigilis_ai_total_logs_evaluated = Counter("vigilis_ai_total_logs_evaluated", "Total number of logs evaluated by the python autoencoder")
+    vigilis_ai_total_anomalies_detected= Counter("vigilis_ai_total_anomalies_detected", "Number of anomaly logs found")
+    vigilis_ai_inference_latency_seconds = Histogram("vigilis_ai_inference_latency_seconds", "Time it took (in seconds) for logs ingestion")
+
     return {
         "model": model,
         "threshold": threshold,
         "vectorizer": vectorizer,
         "one_hot_map": one_hot_map,
+
         "redis": r,
-        "queue_name": queue_name
+        "queue_name": queue_name,
+
+        "vigilis_ai_total_logs_evaluated" : vigilis_ai_total_logs_evaluated,
+        "vigilis_ai_total_anomalies_detected" : vigilis_ai_total_anomalies_detected,
+        "vigilis_ai_inference_latency_seconds" : vigilis_ai_inference_latency_seconds,
     } #return the engine of objects
 
 def build_live_batch_matrix(
@@ -119,10 +127,18 @@ def process_predictions(X_batch, batch, engine):
     model = engine["model"]
     threshold = engine["threshold"]
 
+    vigilis_ai_total_logs_evaluated = engine["vigilis_ai_total_logs_evaluated"]
+    vigilis_ai_total_anomalies_detected = engine["vigilis_ai_total_anomalies_detected"]
+    vigilis_ai_inference_latency_seconds = engine["vigilis_ai_inference_latency_seconds"]
+
+    vigilis_ai_total_logs_evaluated.inc(len(batch))
+
     if X_batch.shape[0] == 0:
         return
+    
+    with vigilis_ai_inference_latency_seconds.time():
+        reconstructed = model.predict(X_batch, verbose=0)
 
-    reconstructed = model.predict(X_batch, verbose=0)
     mse_losses = np.mean(np.square(X_batch - reconstructed), axis=1)
 
     anomalies_found = 0
@@ -149,6 +165,8 @@ def process_predictions(X_batch, batch, engine):
                 payload,
             )
 
+    vigilis_ai_total_anomalies_detected.inc(anomalies_found)
+
     if anomalies_found == 0:
         print(
             f" clean batch {len(batch)} logs evaluated. Max MSE:"
@@ -157,6 +175,7 @@ def process_predictions(X_batch, batch, engine):
 
 def start_worker_loop():
     engine = initialize_ai_engine()
+    start_http_server(8000)
     r = engine["redis"]
     queue_name = engine["queue_name"]
 
