@@ -20,8 +20,10 @@ def get_one_hot_mapping():
     ]
     
     mapping = {}
+    # eg: mapping["dfs.DataBlockScanner"] = [1.0, 0., 0., 0., 0., 0., 0., 0., 0.] (np array)
     num_classes = len(distinct_callers) # Exactly 9 columns
-    
+
+    # one-hot encoding 
     for index, caller in enumerate(distinct_callers):
         one_hot = np.zeros(num_classes)
         one_hot[index] = 1.0

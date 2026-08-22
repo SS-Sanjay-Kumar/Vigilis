@@ -13,14 +13,16 @@ def seed_database_from_hugging_face():
     
     print("info: connecting to hugging face dataset stream")
     dataset = load_dataset("logfit-project/HDFS_v1", split="train", streaming=True) #* streamin = True is important or else machine will go OOM
-    
+
+    # Accumulate 50,000 records in memory before executing a single database call, 
+    # reducing database network roundtrip overhead.
     batch_size = 50000
     batch = []
     total_inserted = 0
     print("starting execution stream and database insertion")
     
     for row in dataset:
-
+        # Parse log time format %y%m%d %H%M%S into standard UTC objects and converts them to ISO 8601 strings
         raw_log_time = datetime.strptime(f"{row['date']} {row['time']}", "%y%m%d %H%M%S").replace(tzinfo=timezone.utc)
         log_timestamp = raw_log_time.isoformat()
 

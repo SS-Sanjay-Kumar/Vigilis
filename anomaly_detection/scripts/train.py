@@ -8,7 +8,7 @@ from src.matrix_builder import build_feature_matrix
 def train_anomaly_detector():
     # Stream structural matrix arrays from memory builder logic
     X_train = build_feature_matrix(batch_size=100000)
-    input_dim = X_train.shape[1] # Will be exactly 110 features
+    input_dim = X_train.shape[1] # Will be exactly 110 features, because shape[1] = columns and we have 110 columns
     
     print(f"Initializing Autoencoder Stack. Input Features: {input_dim}")
     
@@ -26,7 +26,7 @@ def train_anomaly_detector():
         layers.Dense(input_dim, activation='sigmoid') # Reconstructs input dimensions (110)
     ])
     
-    model.compile(optimizer='adam', loss='mse')
+    model.compile(optimizer='adam', loss='mse') #adam = Adaptive Moment Estimation
     model.summary()
     
     print("Launching Model Optimization Loops...")

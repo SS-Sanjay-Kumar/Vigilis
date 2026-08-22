@@ -1,4 +1,5 @@
-# evaluate_test_set.py
+#! depricated, needs new changes
+
 import os
 import re
 import numpy as np
@@ -43,9 +44,9 @@ def evaluate_engine():
     
     print(f"Initializing audit log target file: {audit_filename}")
     with open(audit_filename, "w", encoding="utf-8") as report:
-        report.write("# Sentinel-Stream Anomaly Detection Audit Report\n")
+        report.write("# Vigilis Anomaly Detection Audit Report\n")
         report.write(f"**Baseline Production Threshold:** `{production_threshold:.6f}`\n\n")
-        report.write("## 🚨 CRITICAL ALERTS (Risk >= 75%)\n")
+        report.write("## 🚨 CRITICAL ALERTS\n")
         report.write("| Timestamp | Level | Caller | MSE | Risk Factor | Raw Message |\n")
         report.write("| --- | --- | --- | --- | --- | --- |\n")
     
